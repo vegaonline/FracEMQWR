@@ -85,7 +85,7 @@ int myFactorial(int n) {
 void getMbyb(double alpha){
     int numB = 100;
     double bMin = 0.0, bMax = 20.0, delB = 0.0;
-    delB = (bMax - bMin) / (numB + 1);    
+    delB = (bMax - bMin) / (numB + 1);
     // int numB = (bMax - bMin) / delB;
     for (int ii = 0; ii < numB; ii++){
         double bValue = bMin + ii * delB;
@@ -96,7 +96,8 @@ void getMbyb(double alpha){
         double part3 = boost::math::tgamma(alfab - 2.0 * alpha + 1.0);
         double part4 = boost::math::tgamma(alfab - alpha + 1.0);
         double m2Value = (part0 / (part2 * part3)) + (part0 / (part4 * part1));
-        mbFileOut << alpha << "   " << bValue << "   " << std::sqrt(m2Value) << std::endl;
+        mbFileOut << 50.0 * alpha << "   " << bValue << "   " << std::sqrt(m2Value) << std::endl;
+        // mbFileOut << "   " << bValue << "   " << std::sqrt(m2Value) << alpha << std::endl;
     }
 }
 
