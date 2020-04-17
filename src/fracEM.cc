@@ -32,11 +32,11 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
     n4Alpha = 2; // 1.0 makes n-2 alpha negative which can't provide gamma function
     alpha0 = 1.0e-3;
     alpha1 = 1.0;
-    alphaN = 20;
-    R0 = 0.0;
+    alphaN = 5;
+    R0 = 1.0e-4;
     R1 = 5.0;
-    rN = 100;
-    totN = 500;
+    rN = 50;
+    totN = 50;
     mValue = 1.425;  // this can be determined later
     bValue = 1.425; // determined from b test function
  }
@@ -83,8 +83,8 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
     double freq, omega, mValue;
     double dAlpha, alpha, alpha0, alpha1;
     double R0, R1, delR;
-    double kappa, zeta, lambda, lambda0, bVal = 0.0;  // zeta is z level
-    myComplexD lambdaP(0.0, 0.0), lambdaTotal(0.0, 0.0);
+    double kappa, zeta, lambda, lambda0, lambdaP = 0.0, lambdaTotal = 0.0, bVal = 0.0;  // zeta is z level
+    // myComplexD lambdaP(0.0, 0.0), lambdaTotal(0.0, 0.0);
     int alphaN, rN, n4Alpha, totN;
     double bessJ, bessJD;
 
@@ -96,16 +96,15 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
     // initialize parameters
     initialize(freq, lambda0, omega, n4Alpha, alpha0, alpha1, alphaN, kappa,
         zeta, R0, R1, rN, totN, mValue, bVal);
-
     // Determine initial parameters after getting initialized variables
     lambda = (x2(omega) / x2(vph)); // myComplexD((x2(omega) / x2(vph)), 0.0);
-    dAlpha = std::abs(alpha1 - alpha0) / (double(alphaN));// - 1.0);
+    dAlpha = std::abs(alpha1 - alpha0) / (double(alphaN));
     delR = std::abs(R1 - R0) / (double(rN) - 1.0);
 
     if (isTest) std::cout << " alpha0: " << alpha0 << " alpha1: " << alpha1
-    << " alphaN: " << alphaN << " dAlpha: " << dAlpha << std::endl;
+                          << " alphaN: " << alphaN << " dAlpha: " << dAlpha << std::endl;
     if (isTest) std::cout << " R0: " << R0 << " R1: " << R1 << " rN: " << rN << " delR: "
-    << delR << std::endl;
+                          << delR << std::endl;
     // start loop over alpha *******
     for (int iAlpha = 0; iAlpha < alphaN; iAlpha++){
       alpha = alpha0 + iAlpha * dAlpha;
@@ -124,24 +123,17 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
         double rAlphab = pow(rValue, (alpha * bVal));
         if (isTest) std::cout << " R: " << rValue << " rAlphab: " << rAlphab << std::endl;
         int nPow = std::lround((totN + 1) / 2.0);
-        int nVals = 0;
-        myComplexD ERSUM(0.0, 0.0);
+        double ERSUM = 0.0;
         for (int nITN = 0; nITN < nPow; nITN++){
-            nVals = 2 * nITN;
-myBessel(alpha, nVals, bVal, rValue, bessJ, bessJD);
-
-            myComplexD lambda2n = powCMPLX(lambdaTotal, (2.0 * nVals));
-            double r2AlphaN = pow(rValue, (2.0 * alpha * nVals));
-            double minus1PowN = std::pow(-1.0, nVals);
-            myComplexD d2jRecurrence = d2jRecur(isTest, nVals, bVal, alpha, mValue, lambdaTotal);
-            ERSUM += (minus1PowN * lambda2n * d2jRecurrence  * r2AlphaN);
-            if (isTest) {
-                std::cout << "n: " << nVals << " lambda2n: " << lambda2n
-                << "  r2AlphaN: " << r2AlphaN << " minus1PowN: " << minus1PowN
-                << " d2jRecurrence: " << d2jRecurrence << " ERSUM: " << ERSUM << std::endl;
-            }
+            if (nITN % 2) continue;
+            double factor1 = alpha * (2.0 * nITN + bVal);
+            myBessel(alpha, nITN, bVal, rValue, bessJ, bessJD);
+            //double lambda2n = std::abs(powCMPLX(lambdaTotal, (2.0 * nITN)));
+            double lambda2n = std::pow(lambdaTotal, (2.0 * nITN));
+            double d2jRecurrence = d2jRecur(isTest, nITN, bVal, alpha, mValue, lambdaTotal);
+            ERSUM += lambda2n * std::pow(2.0, factor1) * myFactorial(nITN) * boost::math::tgamma(nITN + 1.0 + bVal) * d2jRecurrence;
         } // end of n loop
-        ERSUM *= rAlphab;
+        ERSUM *= bessJ;
         std::cout << " alpha: " << alpha << " ERSUM: " << ERSUM << std::endl;
         rAlphaOut << alpha << "   " << rValue << "   " << ERSUM << std::endl;
       }// ****** END of R LOOP

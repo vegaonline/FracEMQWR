@@ -22,15 +22,15 @@
 
 typedef std::complex<double> myComplexD;
 
-#define PI    boost::math::constants::pi<double>()
-#define mu0   (4.0 * PI * 1.0e-7)
-#define epsa0 8.85e-12
-#define vph (1.0 / sqrt(epsa0 * mu0))
-#define x2(y) (y * y)
-#define x3(y) (x2(y) * y)
-#define invY(y) (1.0 / y)
-#define isEven(x)  (x % 2 == 0 && x != 0)
-
+#define PI        boost::math::constants::pi<double>()
+#define mu0       (4.0 * PI * 1.0e-7)
+#define epsa0     8.85e-12
+#define vph       (1.0 / sqrt(epsa0 * mu0))
+#define x2(y)     (y * y)
+#define x3(y)     (x2(y) * y)
+#define invY(y)   (1.0 / y)
+#define xBy2(y)   (0.5 * y)
+#define isEven(x) (x % 2 == 0 && x != 0)
 
 bool isTest = 0; // global testing flag
 bool isTestm = 0; // get m for series of b
@@ -43,12 +43,11 @@ std::ofstream rAlphaOut;
 int myFactorial(int);
 void checkArgs(int, char**);
 myComplexD contFrac(bool, double, double, myComplexD);
-void initialize(double &, double &, double &, int &, double &, double &, int &,
-    double &, double &,  double &, double &, int &, int &, double &, double &);
-myComplexD lambdaPrime(bool, int, double, double, double);
+void initialize(double &, double &, double &, int &, double &, double &, int &, double &, double &,  double &, double &, int &, int &, double &, double &);
+double lambdaPrime(bool, int, double, double, double);
 myComplexD powCMPLX(myComplexD, double);
 double dFactor(bool, int, double, double, double);
-myComplexD d2jRecur(bool, int, double, double, double, myComplexD);
+double d2jRecur(bool, int, double, double, double, myComplexD);
 void getMbyb(double);
 void myBessel(double, int, double, double, double &, double &);
 
@@ -59,29 +58,35 @@ void myBessel(double, int, double, double, double &, double &);
 void myBessel(double alpha, int nVal, double bVal, double rVal, double &bessJ, double &bessJD){
     bessJ = 0.0;
     bessJD = 0.0;
+    double rBy2 = xBy2(rVal);
+
     for (int ii = 0; ii < nVal; ii++){
-        double numer = 0.0, denom = 0.0;
-        numer = std::pow(-1.0, ii);
-        double factor = 2.0 * alpha * ii + alpha * bVal;
-        numer *= std::pow(rVal, factor);
-        denom = std::pow(2.0, factor);
-        std::cout << " 5! = " << myFactorial(5) << std::endl;
-        exit(0);
+        double numer1 = 0.0, denom1 = 0.0, factor1 = 0.0;
+        double numer2 = 0.0, denom2 = 0.0, factor2 = 0.0;
+        factor1 = alpha * (2.0 * ii + bVal);
+        factor2 = factor1 - 1.0;
+        numer1 = std::pow(-1.0, ii) * std::pow(rBy2, factor1);
+        denom1 = myFactorial(ii) * (boost::math::tgamma(ii + 1.0 + bVal));
+        bessJ += (numer1 / denom1);
+        numer2 = std::pow(-1.0, ii) * factor1 * std::pow(rBy2, factor2);
+        denom2 = denom1;
+        bessJD += (numer2 / denom2);
     }
 }
 
+// Determine factorial
 int myFactorial(int n) {
-    if (n == 1) {
-        return  1;
-    } else{
-        return (n * myFactorial(n-1);
-    }
+    int result = 0;
+    result = (n > 1) ? n * myFactorial(n-1) : 1;
+    return result;
 }
 
 // Determine mPhi using a range of b
 void getMbyb(double alpha){
-    double bMin = 0.0, bMax = 20.0, delB = 0.5;
-    int numB = (bMax - bMin) / delB;
+    int numB = 100;
+    double bMin = 0.0, bMax = 20.0, delB = 0.0;
+    delB = (bMax - bMin) / (numB + 1);    
+    // int numB = (bMax - bMin) / delB;
     for (int ii = 0; ii < numB; ii++){
         double bValue = bMin + ii * delB;
         double alfab = alpha * bValue;
@@ -96,15 +101,15 @@ void getMbyb(double alpha){
 }
 
 // Determine d_2j using recurrence
-myComplexD d2jRecur(bool isTest, int j, double b, double alpha, double mPhi, myComplexD lamTot){
-    bool isTest1 = 1;
-    myComplexD lam2 = x2(lamTot);
+double d2jRecur(bool isTest, int j, double b, double alpha, double mPhi, double lamTot){
+    bool isTest1 = 0;
+    double lam2 = x2(lamTot);
     if (j%2) return 0.0; // proceeds for even terms only
     if (j > 0) {
-        myComplexD d2jRecurRes = d2jRecur(isTest, j - 2, b, alpha, mPhi, lamTot);
-        myComplexD dFactorRes = dFactor(isTest, j, b, alpha, mPhi);
+        double d2jRecurRes = d2jRecur(isTest, j - 2, b, alpha, mPhi, lamTot);
+        double dFactorRes = dFactor(isTest, j, b, alpha, mPhi);
         // myComplexD result = -1.0 * lam2 * d2jRecurRes * dFactorRes;
-        myComplexD result = lam2 * d2jRecurRes / dFactorRes; // -1 is taken cared in main
+        double result = lam2 * d2jRecurRes / dFactorRes; // -1 is taken cared in main
         if (isTest1) std::cout << " d2jRecurResTmp: " << d2jRecurRes << " dFactorRes: " << dFactorRes
             << " d2jRecur_result: " << result
             << " lam2: " << lam2 << " lamTot: " << lamTot
@@ -152,7 +157,7 @@ myComplexD powCMPLX(myComplexD c, double num){
 }
 
 // find lambda' part to determine lambda
-myComplexD lambdaPrime(bool isTest, int n4Alpha, double alpha, double kappa, double zeta){
+double lambdaPrime(bool isTest, int n4Alpha, double alpha, double kappa, double zeta){
     double nMinus2Alpha = (double)n4Alpha - 2.0 * alpha;
     myComplexD iKappa = myComplexD(0.0, kappa);
     myComplexD iKappaZeta = iKappa * zeta;
@@ -168,7 +173,7 @@ myComplexD lambdaPrime(bool isTest, int n4Alpha, double alpha, double kappa, dou
     myComplexD part3 = contFrac(isTest, 0.0, nMinus2Alpha, iKappaZeta) * exp(-1.0 * iKappaZeta);
     part3 /= boost::math::tgamma(nMinus2Alpha);
     if (isTest) std::cout << " part3L: " << part3 << "   ";
-    myComplexD result = part1 * (part2 - part3);
+    double result = std::abs(part1 * (part2 - part3));
     if (isTest) std::cout << " resultL: " << result << std::endl;
     return result;
 }
