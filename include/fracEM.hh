@@ -23,6 +23,7 @@
 typedef std::complex<double> myComplexD;
 
 #define PI        boost::math::constants::pi<double>()
+#define fGamma(x) boost::math::tgamma(x)
 #define mu0       (4.0 * PI * 1.0e-7)
 #define epsa0     8.85e-12
 #define vph       (1.0 / sqrt(epsa0 * mu0))
@@ -66,7 +67,7 @@ void myBessel(double alpha, int nVal, double bVal, double rVal, double &bessJ, d
         factor1 = alpha * (2.0 * ii + bVal);
         factor2 = factor1 - 1.0;
         numer1 = std::pow(-1.0, ii) * std::pow(rBy2, factor1);
-        denom1 = myFactorial(ii) * (boost::math::tgamma(ii + 1.0 + bVal));
+        denom1 = myFactorial(ii) * fGamma(ii + 1.0 + bVal);
         bessJ += (numer1 / denom1);
         numer2 = std::pow(-1.0, ii) * factor1 * std::pow(rBy2, factor2);
         denom2 = denom1;
@@ -90,13 +91,13 @@ void getMbyb(double alpha){
     for (int ii = 0; ii < numB; ii++){
         double bValue = bMin + ii * delB;
         double alfab = alpha * bValue;
-        double part0 = boost::math::tgamma(alfab + 1.0);
-        double part1 = boost::math::tgamma(alpha + 1.0);
+        double part0 = fGamma(alfab + 1.0);
+        double part1 = fGamma(alpha + 1.0);
         double part2 = x2(part1);
-        double part3 = boost::math::tgamma(alfab - 2.0 * alpha + 1.0);
-        double part4 = boost::math::tgamma(alfab - alpha + 1.0);
+        double part3 = fGamma(alfab - 2.0 * alpha + 1.0);
+        double part4 = fGamma(alfab - alpha + 1.0);
         double m2Value = (part0 / (part2 * part3)) + (part0 / (part4 * part1));
-        mbFileOut << 50.0 * alpha << "   " << bValue << "   " << std::sqrt(m2Value) << std::endl;
+        mbFileOut << alpha << "   " << bValue << "   " << std::sqrt(m2Value) << std::endl;
         // mbFileOut << "   " << bValue << "   " << std::sqrt(m2Value) << alpha << std::endl;
     }
 }
@@ -125,13 +126,13 @@ double d2jRecur(bool isTest, int j, double b, double alpha, double mPhi, double 
 // Find gamma related denominator in d_2j
 double dFactor(bool isTest, int j, double b, double alpha, double mPhi){
     double result = 0.0;
-    double part0 = boost::math::tgamma(alpha + 1.0);
+    double part0 = fGamma(alpha + 1.0);
     if (isTest) std::cout << " part0: " << part0 << "   ";
-    double part1 = boost::math::tgamma(alpha * b +  j * alpha + 1.0);
+    double part1 = fGamma(alpha * b +  j * alpha + 1.0);
     if (isTest) std::cout << " part1: " << part1 << "   ";
-    double part2 = boost::math::tgamma(alpha * b + (j - 2.0) * alpha + 1.0);
+    double part2 = fGamma(alpha * b + (j - 2.0) * alpha + 1.0);
     if (isTest) std::cout << " part2: " << part2 << "   ";
-    double part3 = boost::math::tgamma(alpha * b + (j - 1.0) * alpha + 1.0);
+    double part3 = fGamma(alpha * b + (j - 1.0) * alpha + 1.0);
     if (isTest) std::cout << " part3: " << part3 << "   ";
     double part4 = x2(mPhi) * x2(part0);
     if (isTest) std::cout << " part4: " << part4 << "   ";

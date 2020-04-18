@@ -30,15 +30,15 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
     kappa = (2.0 * PI) / lambda0;
     zeta = 1.0; // the z level
     n4Alpha = 2; // 1.0 makes n-2 alpha negative which can't provide gamma function
-    alpha0 = 1.0e-3;
+    alpha0 = 1.0e-5;
     alpha1 = 1.0;
     alphaN = 5;
     R0 = 1.0e-4;
     R1 = 5.0;
     rN = 50;
     totN = 50;
-    mValue = 1.425;  // this can be determined later
-    bValue = 1.425; // determined from b test function
+    mValue = std::sqrt(2.0);  // this can be determined later
+    bValue = mValue; // determined from b test function
  }
 
  void checkArgs(int argc, char **argv){
@@ -77,7 +77,7 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
 
  int main(int argc, char** argv){
     checkArgs(argc, argv);
-    if (isTestm) mbFileOut.open("mbValues.dat");
+
     if (!isTestm) rAlphaOut.open("alphaRvalues.dat");
 
     double freq, omega, mValue;
@@ -111,7 +111,15 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
       if (isTest) std::cout << " alpha: " << alpha << std::endl;
 
       if (isTestm) {
+          double alphaV = int(alpha * 10.0) / 10.0;
+          std::string alphaTXT = std::to_string(alphaV);
+          alphaTXT.erase ( alphaTXT.find_last_not_of('0') + 1, std::string::npos ); // remove Trailing zeroes
+          if (alphaTXT == "0.") alphaTXT = "0.0";                                   // makes 0. to 0.0
+          std::string fnameMB = "data/mbValues_" + alphaTXT + ".dat";
+          mbFileOut.open(fnameMB.c_str());
           getMbyb(alpha);
+          //mbFileOut << std::endl;
+          mbFileOut.close();
           continue;
       }
 
@@ -131,12 +139,15 @@ void initialize(double &freq, double &lambda0, double &omega, int &n4Alpha, doub
             //double lambda2n = std::abs(powCMPLX(lambdaTotal, (2.0 * nITN)));
             double lambda2n = std::pow(lambdaTotal, (2.0 * nITN));
             double d2jRecurrence = d2jRecur(isTest, nITN, bVal, alpha, mValue, lambdaTotal);
-            ERSUM += lambda2n * std::pow(2.0, factor1) * myFactorial(nITN) * boost::math::tgamma(nITN + 1.0 + bVal) * d2jRecurrence;
+            ERSUM += lambda2n * std::pow(2.0, factor1) * myFactorial(nITN) * fGamma(nITN + 1.0 + bVal) * d2jRecurrence;
         } // end of n loop
         ERSUM *= bessJ;
         std::cout << " alpha: " << alpha << " ERSUM: " << ERSUM << std::endl;
         rAlphaOut << alpha << "   " << rValue << "   " << ERSUM << std::endl;
       }// ****** END of R LOOP
     } // ****** END of alpha LOOP
+
+
+    rAlphaOut.close();
     return 0;
  }
